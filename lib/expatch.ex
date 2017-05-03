@@ -112,7 +112,6 @@ defmodule Expatch do
           {get, update} -> {get, update}
         end
       (:get_and_update, data, next) when is_map(data) ->
-        # IO.puts "#{inspect(field)}, #{inspect(data)}: #{inspect(next.(data[field]))}"
         if op == :remove && !Map.has_key?(data, field), do: raise(ObjectMemberNotFoundError)
         {:ok, value, key} = get_string_or_atom(data, field)
         case next.(value) do
@@ -126,10 +125,8 @@ defmodule Expatch do
 
       (:get_and_update, data, next) when is_list(data) ->
         index = parse_list_index(field, op, length(data))
-        # IO.puts "#{inspect(field)}, #{inspect(data)}, #{inspect(last?)}"
         case next.(Enum.at(data, index)) do
           {get, update} ->
-            # IO.inspect(op)
             case op do
               :add -> {get, List.insert_at(data, index, update)}
               _ -> {get, List.replace_at(data, index, update)}

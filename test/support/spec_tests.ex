@@ -43,9 +43,6 @@ defmodule Expatch.SpecTests do
     |> Enum.map(fn({test, index}) -> Map.put(test, "index", index) end)
     |> Enum.filter(&testable?/1)
     |> Enum.map(&transform_error/1)
-    # |> Enum.take(80)
-    # |> List.last
-    # |> List.wrap
   end
 
   defp read_tests_file(file) do
