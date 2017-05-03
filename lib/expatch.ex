@@ -72,7 +72,7 @@ defmodule Expatch do
   defp add(target, %{path: path, value: value}),
     do: {:ok, put_in(target, access_func(path, :add), value)}
 
-  defp replace(target, %{path: [], value: value}),
+  defp replace(_target, %{path: [], value: value}),
     do: {:ok, value}
   defp replace(target, %{path: path, value: value}),
     do: {:ok, put_in(target, access_func(path, :replace), value)}
@@ -99,7 +99,7 @@ defmodule Expatch do
     end
   end
 
-  defp access_func([], op), do: []
+  defp access_func([], _op), do: []
   defp access_func([field], op), do: [access_func(field, op)]
   defp access_func([field | fields], op), do: [access_func(field, nil)] ++ access_func(fields, op)
   defp access_func(field, op) do
@@ -107,13 +107,15 @@ defmodule Expatch do
       (:get_and_update, data, next) when is_map(data) ->
         # IO.puts "#{inspect(field)}, #{inspect(data)}: #{inspect(next.(data[field]))}"
         if op == :remove && !Map.has_key?(data, field), do: raise(ObjectMemberNotFoundError)
-        case next.(data[field]) do
-          {get, update} -> {get, Map.put(data, field, update)}
-          :pop -> Map.pop(data, field)
+        {:ok, value, key} = get_string_or_atom(data, field)
+        case next.(value) do
+          {get, update} -> {get, Map.put(data, key, update)}
+          :pop -> Map.pop(data, key)
         end
 
       (:get, data, next) when is_map(data) ->
-        next.(data[field])
+        {:ok, value, _key} = get_string_or_atom(data, field)
+        next.(value)
 
       (:get_and_update, data, next) when is_list(data) ->
         index = parse_list_index(field, op, length(data))
@@ -137,12 +139,12 @@ defmodule Expatch do
   defp parse_list_index("-", :add, _), do: -1
   defp parse_list_index(field, op, list_length) when is_binary(field),
     do: parse_list_index(to_array_index(field), op, list_length)
-  defp parse_list_index(index, op, _) when is_integer(index) and index < 0,
+  defp parse_list_index(index, _op, _) when is_integer(index) and index < 0,
     do: raise(OutOfBoundsLower)
   defp parse_list_index(index, op, list_length)
     when is_integer(index) and index >= list_length and op in [:remove, :replace],
     do: raise(OutOfBoundsUpper)
-  defp parse_list_index(index, op, list_length)
+  defp parse_list_index(index, _op, list_length)
     when is_integer(index) and index > list_length,
     do: raise(OutOfBoundsUpper)
   defp parse_list_index(index, _, _),
@@ -153,5 +155,28 @@ defmodule Expatch do
     String.to_integer(field)
   rescue
     ArgumentError -> raise(BadArrayKey)
+  end
+
+  defp get_string_or_atom(map, field) when is_binary(field) do
+    case Map.fetch(map, field) do
+      {:ok, value} -> {:ok, value, field}
+      :error ->
+        case to_existing_atom(field) do
+          {:ok, key} ->
+            case Map.fetch(map, key) do
+              {:ok, value} -> {:ok, value, key}
+              :error -> {:ok, nil, field}
+            end
+          :error -> {:ok, nil, field}
+        end
+    end
+  end
+
+  defp to_existing_atom(string) do
+    try do
+      {:ok, String.to_existing_atom(string)}
+    rescue
+      ArgumentError -> :error
+    end
   end
 end

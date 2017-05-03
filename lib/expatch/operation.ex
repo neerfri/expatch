@@ -11,7 +11,7 @@ defmodule Expatch.Operation do
 
   def new!(map) when is_map(map) do
     op = fetch(map, :op)
-    validate_op!(map, op)
+    validate_op!(op)
     validate_value!(map, op)
     validate_from!(map, op)
     %__MODULE__{
@@ -24,8 +24,8 @@ defmodule Expatch.Operation do
 
   defp fetch(map, field), do: map[field] || map[to_string(field)]
 
-  defp validate_op!(map, op) when op in @ops, do: :ok
-  defp validate_op!(map, op) do
+  defp validate_op!(op) when op in @ops, do: :ok
+  defp validate_op!(op) do
     raise(InvalidOperationError, "Unrecognized op '#{op}'")
   end
 
