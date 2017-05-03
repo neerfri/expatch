@@ -36,9 +36,9 @@ defmodule Expatch.SpecTests do
   end
 
   def test_specs do
-    Path.join(__DIR__, "tests.json")
-    |> File.read!()
-    |> Poison.decode!()
+    # These files are taken from: https://github.com/json-patch/json-patch-tests
+    read_tests_file("tests.json")
+    |> Enum.concat(read_tests_file("spec_tests.json"))
     |> Enum.with_index
     |> Enum.map(fn({test, index}) -> Map.put(test, "index", index) end)
     |> Enum.filter(&testable?/1)
@@ -48,7 +48,14 @@ defmodule Expatch.SpecTests do
     # |> List.wrap
   end
 
+  defp read_tests_file(file) do
+    Path.join(__DIR__, file)
+    |> File.read!()
+    |> Poison.decode!()
+  end
+
   defp testable?(%{"error" => "patch has two 'op' members"}), do: false
+  defp testable?(%{"error" => "operation has two 'op' members"}), do: false
   defp testable?(_), do: true
 
   def expected_result(test_spec) do
@@ -100,6 +107,12 @@ defmodule Expatch.SpecTests do
     do: "index is greater than number of items in array"
   defp transform_error("removing a nonexistent field should fail"),
     do: "object member not found"
+  defp transform_error("path /a does not exist -- missing objects are not created recursively"),
+    do: "add to a non-existent target"
+  defp transform_error("string not equivalent"),
+    do: "test failed"
+  defp transform_error("number is not equal to string"),
+    do: "test failed"
   defp transform_error(error) when is_binary(error),
     do: error
 end

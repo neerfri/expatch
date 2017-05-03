@@ -13,6 +13,7 @@ defmodule Expatch do
 
   """
   alias Expatch.Errors.{
+    AddToNonExistingTargetError,
     ArrayIndexHasLeadingZero,
     BadArrayKey,
     InvalidOperationError,
@@ -24,6 +25,7 @@ defmodule Expatch do
   }
 
   @errors [
+    AddToNonExistingTargetError,
     ArrayIndexHasLeadingZero,
     BadArrayKey,
     InvalidOperationError,
@@ -104,6 +106,11 @@ defmodule Expatch do
   defp access_func([field | fields], op), do: [access_func(field, nil)] ++ access_func(fields, op)
   defp access_func(field, op) do
     fn
+      (:get_and_update, data, next) when is_nil(data) ->
+        if op == :add, do: raise(AddToNonExistingTargetError)
+        case next.(nil) do
+          {get, update} -> {get, update}
+        end
       (:get_and_update, data, next) when is_map(data) ->
         # IO.puts "#{inspect(field)}, #{inspect(data)}: #{inspect(next.(data[field]))}"
         if op == :remove && !Map.has_key?(data, field), do: raise(ObjectMemberNotFoundError)

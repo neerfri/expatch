@@ -4,6 +4,7 @@ defmodule Expatch.Errors do
   defmodule BadArrayKey, do: defexception message: "object operation on array target"
   defmodule ArrayIndexHasLeadingZero, do: defexception message: "array index has leading zero"
   defmodule ObjectMemberNotFoundError, do: defexception message: "object member not found"
+  defmodule AddToNonExistingTargetError, do: defexception message: "add to a non-existent target"
 
   defmodule OperationMissingValueError,
     do: defexception [message: "operation missing value parameter"]
