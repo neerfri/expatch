@@ -8,6 +8,9 @@ defmodule Expatch.Mixfile do
      elixirc_paths: elixirc_paths(Mix.env),
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     description: description(),
+     package: package(),
+     docs: docs(),
      deps: deps()]
   end
 
@@ -30,7 +33,30 @@ defmodule Expatch.Mixfile do
   # Type "mix help deps" for more examples and options
   defp deps do
     [
-      {:poison, ">= 0.0.0", except: :prod},
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:poison, ">= 0.0.0", only: [:test, :dev]},
+    ]
+  end
+
+  defp description do
+    """
+    An Elixir implementation of JSON Patch http://jsonpatch.com/
+    """
+  end
+
+  defp package() do
+    [
+      maintainers: ["Neer Friedman"],
+      licenses: ["MIT"],
+      files: ~w(mix.exs README.md lib),
+      links: %{"GitHub" => "https://github.com/neerfri/expatch"}
+    ]
+  end
+
+  defp docs() do
+    [
+      main: "readme",
+      extras: ["README.md"],
     ]
   end
 
