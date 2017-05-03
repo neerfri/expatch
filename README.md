@@ -16,4 +16,6 @@ end
 
 ## Usage
 
+```elixir
 Expatch.apply(%{foo: "bar"}, [%{op: "add", path: "/baz", value: "qux"}])
+```
